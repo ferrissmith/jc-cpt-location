@@ -15,9 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 class CPT_Location_InitCPT {
 
 	private $post_type = 'jc-location';
-	private $label_singular = 'Location Member';
-	private $label_plural = 'Location';
-	private $icon = 'businessman';
+	private $label_singular = 'Location';
+	private $label_plural = 'Locations';
+	private $icon = 'location';
 
 	function __construct() {
 
@@ -29,7 +29,6 @@ class CPT_Location_InitCPT {
 		add_action( 'init', array( $this, '_create_cpt' ) );
 		add_filter( 'post_updated_messages', array( $this, '_post_messages' ) );
 		add_action( 'add_meta_boxes', array( $this, '_add_meta_boxes' ), 100 );
-		add_action( 'save_post', array( $this, '_modify_title' ) );
 		add_action( 'current_screen', array( $this, '_page_actions' ) );
 
 		add_filter( 'post_type_labels_jc-location', array( $this, '_rename_featured_image' ) );
@@ -43,9 +42,6 @@ class CPT_Location_InitCPT {
 
 		// Load Parsley
 		add_filter( 'rbm_load_parsley', '__return_true' );
-
-		// Load some custom CSS
-		add_action( 'admin_enqueue_scripts', array( $this, '_page_scripts' ) );
 	}
 
 	function _create_cpt() {
@@ -79,33 +75,10 @@ class CPT_Location_InitCPT {
 			'has_archive'        => true,
 			'hierarchical'       => false,
 			'menu_position'      => null,
-			'supports'           => array( 'thumbnail' )
+			'supports'           => array( 'title', 'thumbnail', 'editor' )
 		);
 
 		register_post_type( $this->post_type, $args );
-
-		// Taxonomies
-		$labels = array(
-			'name'               => 'Departments',
-			'singular_name'      => 'Department',
-			'menu_name'          => 'Departments',
-			'name_admin_bar'     => 'Department',
-			'add_new'            => "Add New",
-			'add_new_item'       => "Add New Department",
-			'new_item'           => "New Department",
-			'edit_item'          => "Edit Department",
-			'view_item'          => "View Department",
-			'all_items'          => "All Departments",
-			'search_items'       => "Search Departments",
-			'parent_item_colon'  => "Parent Departments:",
-			'not_found'          => "No Departments found.",
-			'not_found_in_trash' => "No Departments found in Trash.",
-		);
-
-		register_taxonomy( 'jc-location-department', 'jc-location', array(
-			'labels'            => $labels,
-			'show_admin_column' => true,
-		) );
 	}
 
 	function _post_messages( $messages ) {
@@ -145,16 +118,6 @@ class CPT_Location_InitCPT {
 		return $messages;
 	}
 
-	function _page_scripts() {
-
-		wp_enqueue_style(
-			'cpt-location-admin',
-			CPT_LOCATION_URL . '/assets/css/cpt-location-admin.css',
-			null,
-			CPT_LOCATION_VERSION
-		);
-	}
-
 	/**
 	 * Renames the featured image text.
 	 *
@@ -174,35 +137,6 @@ class CPT_Location_InitCPT {
 		return $labels;
 	}
 
-	function _modify_title() {
-
-		// Make sure we should be here!
-		if ( ! isset( $_POST['_rbm_fields'] ) ||
-		     ! wp_verify_nonce( $_POST['rbm-meta'], 'rbm-save-meta' ) ||
-		     ! current_user_can( 'edit_posts' ) ||
-		     get_post_type( get_the_ID() ) != 'jc-location'
-		) {
-			return;
-		}
-
-		static $did_one;
-
-		if ( $did_one ) {
-			return;
-		}
-
-		$did_one = true;
-
-		$name = rbm_get_field( 'first_name' ) . ' ' . rbm_get_field( 'last_name' );
-
-		wp_insert_post( array(
-			'ID'          => get_the_ID(),
-			'post_title'  => $name,
-			'post_type'   => 'jc-location',
-			'post_status' => 'publish',
-		) );
-	}
-
 	function _add_meta_boxes() {
 
 		add_meta_box(
@@ -217,46 +151,17 @@ class CPT_Location_InitCPT {
 
 	function _mb_properties() {
 
-		rbm_do_field_text( 'first_name', 'First Name', false, array(
-			'wrapper_class' => 'rbm-col-4',
-			'validation'    => array(
-				'required' => 'true',
-			),
-		) );
-
-		rbm_do_field_text( 'last_name', 'Last Name', false, array(
-			'wrapper_class' => 'rbm-col-4',
-			'validation'    => array(
-				'required' => 'true',
-			),
-		) );
-
-		rbm_do_field_text( 'email', 'Email', false, array(
-			'wrapper_class' => 'rbm-col-4',
+		rbm_do_field_textarea( 'address', 'Address', false, array(
+			'wrapper_class' => 'rbm-col-2',
 			'validation'    => array(
 				'required' => 'true',
 			),
 		) );
 
 		rbm_do_field_text( 'phone', 'Phone', false, array(
-			'wrapper_class' => 'rbm-col-4',
-			'validation'    => array(
-				'required' => 'true',
-			),
+			'wrapper_class' => 'rbm-col-2',
 		) );
 
 		echo '<div class="clearfix"></div>';
-
-		rbm_do_field_text( 'position', 'Position', false, array(
-			'validation' => array(
-				'required' => 'true',
-			),
-		) );
-
-		rbm_do_field_textarea( 'bio', 'Bio', false, array(
-			'validation' => array(
-				'required' => 'true',
-			),
-		) );
 	}
 }
